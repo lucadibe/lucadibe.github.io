@@ -4,26 +4,23 @@
     <meta charset="UTF-8">
     <title>Moneyline Dashboard Pro</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #131722; font-family: sans-serif; color: white; overflow: hidden; }
-        .container { display: flex; height: 100vh; }
+        body { margin: 0; padding: 0; background-color: #131722; font-family: sans-serif; color: white; display: flex; height: 100vh; overflow: hidden; }
         .chart-section { flex: 1.5; border-right: 1px solid #333; }
         .signals-section { flex: 1.2; padding: 15px; background-color: #1e222d; overflow-y: auto; }
-        h2 { color: #d1d4dc; font-size: 1.1rem; margin-top: 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        h2 { color: #d1d4dc; font-size: 1.1rem; margin: 0 0 15px 0; display: flex; justify-content: space-between; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { text-align: left; color: #888; border-bottom: 1px solid #444; padding: 8px; position: sticky; top: 0; background: #1e222d; }
         td { padding: 8px; border-bottom: 1px solid #2a2e39; cursor: pointer; }
         tr:hover { background-color: #2a2e39; }
         .buy { color: #00ff00; font-weight: bold; }
         .sell { color: #ff4444; font-weight: bold; }
-        .pos { color: #4caf50; } .neg { color: #f44336; }
+        .status-dot { font-size: 10px; }
     </style>
 </head>
 <body>
-
-<div class="container">
     <div class="chart-section" id="tv_chart"></div>
     <div class="signals-section">
-        <h2>Dashboard Live <span id="status" style="font-size: 10px; color: #888;">● Avvio...</span></h2>
+        <h2>Dashboard Live <span id="status" class="status-dot">● Sincronizzazione...</span></h2>
         <table>
             <thead>
                 <tr>
@@ -33,72 +30,82 @@
                     <th>D (I)</th>
                     <th>G W (G)</th>
                     <th>G D (K)</th>
-                    <th>Var% W</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
-</div>
 
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script>
+    // URL del tuo foglio pubblicato
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdzNpQjqwdqK5ZO16Kd8hlNNtmm31gxOy1AAb49CDXqxMwEOmUpowc9H4rHWPbb9rd874zmOtcDTUo/pub?gid=1410987574&single=true&output=csv';
 
     function initChart(symbol = "BINANCE:BTCUSDT") {
         document.getElementById('tv_chart').innerHTML = '';
-        new TradingView.widget({ "autosize": true, "symbol": symbol, "interval": "D", "theme": "dark", "style": "1", "locale": "it", "container_id": "tv_chart" });
+        new TradingView.widget({
+            "autosize": true, "symbol": symbol, "interval": "D", "theme": "dark", "style": "1", "locale": "it", "container_id": "tv_chart"
+        });
     }
 
-    function parseValue(val) {
-        if (!val) return 0;
-        let clean = val.toString().toLowerCase().replace('null', '').replace('undefined', '').replace(',', '.').trim();
-        return parseFloat(clean) || 0;
+    // Funzione per pulire i numeri con la virgola italiana
+    function parseItalianFloat(value) {
+        if (!value) return 0;
+        let cleanValue = value.toString().replace(/\./g, '').replace(',', '.').trim();
+        return parseFloat(cleanValue) || 0;
     }
 
-    async function updateData() {
+    async function updateDashboard() {
         try {
-            const res = await fetch(csvUrl + '&nocache=' + Date.now());
-            const text = await res.text();
-            const delimiter = text.includes(';') ? ';' : ',';
-            const rows = text.split(/\r?\n/).map(r => r.split(delimiter));
+            const response = await fetch(csvUrl + '&t=' + Date.now());
+            const data = await response.text();
+            
+            // Gestione intelligente del separatore (virgola o punto e virgola)
+            const rows = data.split(/\r?\n/).map(row => {
+                // Se la riga contiene punto e virgola, usa quello, altrimenti usa la virgola
+                const sep = row.includes(';') ? ';' : ',';
+                return row.split(sep);
+            });
+
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
+            // Saltiamo l'intestazione (i=1)
             for (let i = 1; i < rows.length; i++) {
-                const c = rows[i];
-                if (!c[0] || c[0].length < 2) continue;
+                const col = rows[i];
+                if (!col[0] || col[0].length < 2) continue;
 
-                const ticker = c[0].trim();
-                const prezzo = parseValue(c[2]); 
-                const sigW = (c[4] || '').toUpperCase();
-                const sigD = (c[8] || '').toUpperCase();
-                const ggW = parseValue(c[6]);
-                const ggD = parseValue(c[10]);
-                const varW = ggW !== 0 ? (((prezzo - ggW) / ggW) * 100).toFixed(2) : "0.00";
+                // Mappatura esatta basata sulla tua immagine del foglio
+                const ticker = col[0].trim();
+                const prezzo = col[2]; // Colonna C
+                const segnaleW = (col[4] || '').toUpperCase(); // Colonna E
+                const segnaleD = (col[8] || '').toUpperCase(); // Colonna I
+                const giorniW = col[6] || '0'; // Colonna G
+                const giorniD = col[10] || '0'; // Colonna K
 
                 const tr = document.createElement('tr');
                 tr.onclick = () => initChart(ticker.includes(':') ? ticker : "BINANCE:" + ticker);
+                
                 tr.innerHTML = `
                     <td><b>${ticker}</b></td>
-                    <td>${prezzo.toFixed(2)}</td>
-                    <td class="${sigW.includes('BUY')?'buy':sigW.includes('SELL')?'sell':''}">${sigW}</td>
-                    <td class="${sigD.includes('BUY')?'buy':sigD.includes('SELL')?'sell':''}">${sigD}</td>
-                    <td>${ggW}</td>
-                    <td>${ggD}</td>
-                    <td class="${varW >= 0 ? 'pos' : 'neg'}">${varW}%</td>
+                    <td>${prezzo}</td>
+                    <td class="${signaleW.includes('BUY') ? 'buy' : 'sell'}">${signaleW}</td>
+                    <td class="${signaleD.includes('BUY') ? 'buy' : 'sell'}">${signaleD}</td>
+                    <td>${giorniW}</td>
+                    <td>${giorniD}</td>
                 `;
                 tbody.appendChild(tr);
             }
-            document.getElementById('status').innerHTML = '<span style="color:#4caf50">● Online</span>';
+            document.getElementById('status').style.color = "#4caf50";
+            document.getElementById('status').innerText = "● Sincronizzato";
         } catch (e) {
-            document.getElementById('status').innerHTML = '<span style="color:#f44336">● Errore</span>';
+            document.getElementById('status').innerText = "● Errore Connessione";
         }
     }
 
     initChart();
-    updateData();
-    setInterval(updateData, 30000);
+    updateDashboard();
+    setInterval(updateDashboard, 30000); // Aggiorna ogni 30 secondi
 </script>
 </body>
 </html>
