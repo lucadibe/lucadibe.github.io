@@ -5,38 +5,37 @@
     <title>Moneyline Dashboard - Pure Data</title>
     <style>
         body { margin: 0; padding: 20px; background-color: #131722; font-family: 'Segoe UI', sans-serif; color: #e0e0e0; }
-        .data-section { max-width: 1200px; margin: 0 auto; background-color: #1e222d; border-radius: 8px; border: 1px solid #2a2e39; overflow: hidden; }
+        .data-section { max-width: 1200px; margin: 0 auto; background-color: #1e222d; border-radius: 8px; border: 1px solid #2a2e39; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .header-panel { padding: 15px 20px; border-bottom: 1px solid #2a2e39; background: #1e222d; display: flex; justify-content: space-between; align-items: center; }
         h2 { margin: 0; font-size: 18px; color: #d1d4dc; }
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; table-layout: fixed; }
         th { position: sticky; top: 0; background: #2a2e39; color: #b2b5be; padding: 12px 10px; cursor: pointer; border-bottom: 2px solid #363a45; white-space: nowrap; }
-        td { padding: 12px 10px; border-bottom: 1px solid #2a2e39; }
+        td { padding: 12px 10px; border-bottom: 1px solid #2a2e39; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         tr:hover { background-color: #2a2e39; }
         
-        /* Filtri */
         .filter-row th { background: #1e222d; padding: 5px 10px; }
         .filter-input { width: 100%; background: #131722; border: 1px solid #444; color: #fff; font-size: 11px; padding: 5px; border-radius: 3px; box-sizing: border-box; }
         
-        /* Segnali */
-        .buy { color: #00ff00; font-weight: bold; }
-        .sell { color: #ff4444; font-weight: bold; }
-        .status-dot { color: #4caf50; margin-right: 5px; }
+        /* Colori Segnali */
+        .buy-text { color: #00ff00; font-weight: bold; }
+        .sell-text { color: #ff4444; font-weight: bold; }
+        .status-live { color: #4caf50; font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="data-section">
         <div class="header-panel">
-            <h2>Moneyline Dashboard <span style="font-size: 12px; color: #888; margin-left: 10px;">Dati Estratti dal Foglio</span></h2>
-            <div id="status"><span class="status-dot">●</span>LIVE</div>
+            <h2>Moneyline Dashboard</h2>
+            <div id="status" class="status-live">● LIVE</div>
         </div>
         
         <div class="table-container">
             <table id="mainTable">
                 <thead>
                     <tr>
-                        <th onclick="sortTable(0)">Ticker</th>
+                        <th style="width: 120px;" onclick="sortTable(0)">Ticker</th>
                         <th onclick="sortTable(1)">Prezzo attuale</th>
                         <th onclick="sortTable(2)">Trend W</th>
                         <th onclick="sortTable(3)">Day W</th>
@@ -47,19 +46,22 @@
                     </tr>
                     <tr class="filter-row">
                         <th><input type="text" class="filter-input" placeholder="Cerca..." onkeyup="filterTable(0)"></th>
-                        <th></th> <th><input type="text" class="filter-input" placeholder="BUY/SELL" onkeyup="filterTable(2)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Min. giorni" onkeyup="filterTable(3)"></th>
-                        <th></th> <th><input type="text" class="filter-input" placeholder="BUY/SELL" onkeyup="filterTable(5)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Min. giorni" onkeyup="filterTable(6)"></th>
-                        <th></th> </tr>
+                        <th></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(2)"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(3)"></th>
+                        <th></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(5)"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(6)"></th>
+                        <th></th>
+                    </tr>
                 </thead>
-                <tbody id="tableBody">
-                    </tbody>
+                <tbody id="tableBody"></tbody>
             </table>
         </div>
     </div>
 
 <script>
+    // URL del tuo CSV pubblicato
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdzNpQjqwdqK5ZO16Kd8hlNNtmm31gxOy1AAb49CDXqxMwEOmUpowc9H4rHWPbb9rd874zmOtcDTUo/pub?gid=1410987574&single=true&output=csv';
 
     async function update() {
@@ -73,32 +75,46 @@
 
             for (let i = 1; i < rows.length; i++) {
                 const c = rows[i];
-                // Salta righe vuote o senza ticker
                 if (!c[0] || c[0].length < 1) continue;
 
-                // Mappatura precisa basata sulle tue istruzioni:
-                const ticker = c[0].trim();        // Col A (index 0)
-                const trendW = (c[4]||"").trim();  // Col E (index 4)
-                const dayW   = c[6] || "";         // Col G (index 6)
-                const trendD = (c[8]||"").trim();  // Col I (index 8)
-                const dayD   = c[10] || "";        // Col K (index 10)
+                // FIX MAPPATURA BASATA SUI TUOI DATI REALI
+                // Se la colonna 4 mostrava i numeri (Col D), allora:
+                // Col E (Trend W) è all'indice 5 o 6 nel CSV esportato
+                // Col G (Day W) è all'indice 8
+                // Col I (Trend D) è all'indice 10
+                // Col K (Day D) è all'indice 12
+
+                const ticker = c[0].replace(/"/g, '').trim();
+                const trendW = (c[6] || "").replace(/"/g, '').trim(); // Stato W (Col E)
+                const dayW   = (c[8] || "").replace(/"/g, '').trim(); // Giorni W (Col G)
+                const trendD = (c[10] || "").replace(/"/g, '').trim(); // Stato D (Col I)
+                const dayD   = (c[12] || "").replace(/"/g, '').trim(); // Giorni D (Col K)
 
                 const tr = document.createElement('tr');
+                
+                // Funzione per colorare BUY/SELL
+                const formatTrend = (val) => {
+                    if (val.toUpperCase().includes('BUY')) return `<span class="buy-text">${val}</span>`;
+                    if (val.toUpperCase().includes('SELL')) return `<span class="sell-text">${val}</span>`;
+                    return val;
+                };
+
                 tr.innerHTML = `
                     <td style="font-weight:bold; color:#2962ff">${ticker}</td>
-                    <td>-</td> <td class="${trendW.toUpperCase().includes('BUY') ? 'buy' : 'sell'}">${trendW}</td>
+                    <td>-</td>
+                    <td>${formatTrend(trendW)}</td>
                     <td>${dayW}</td>
-                    <td>-</td> <td class="${trendD.toUpperCase().includes('BUY') ? 'buy' : 'sell'}">${trendD}</td>
+                    <td>-</td>
+                    <td>${formatTrend(trendD)}</td>
                     <td>${dayD}</td>
-                    <td>-</td> `;
+                    <td>-</td>
+                `;
                 tbody.appendChild(tr);
             }
-        } catch (e) { 
-            console.error("Errore caricamento dati:", e); 
-        }
+        } catch (e) { console.error("Errore:", e); }
     }
 
-    // Funzione per filtrare la tabella
+    // Filtri e Ordinamento
     window.filterTable = function(n) {
         let input = document.getElementsByClassName("filter-input")[n];
         if(!input) return;
@@ -106,40 +122,25 @@
         let rows = document.getElementById("tableBody").getElementsByTagName("tr");
         for (let i = 0; i < rows.length; i++) {
             let td = rows[i].getElementsByTagName("td")[n];
-            if (td) {
-                rows[i].style.display = td.innerText.toUpperCase().includes(filter) ? "" : "none";
-            }
+            if (td) { rows[i].style.display = td.innerText.toUpperCase().includes(filter) ? "" : "none"; }
         }
     }
 
-    // Funzione per ordinare la tabella
-    let sortDirections = {};
+    let sortDir = {};
     window.sortTable = function(n) {
-        let table = document.getElementById("mainTable");
         let tbody = document.getElementById("tableBody");
         let rows = Array.from(tbody.rows);
-        
-        sortDirections[n] = !sortDirections[n];
-        
+        sortDir[n] = !sortDir[n];
         rows.sort((a, b) => {
-            let x = a.getElementsByTagName("td")[n].innerText.toLowerCase();
-            let y = b.getElementsByTagName("td")[n].innerText.toLowerCase();
-            
-            // Prova a ordinare come numero se possibile
-            let xNum = parseFloat(x);
-            let yNum = parseFloat(y);
-            if (!isNaN(xNum) && !isNaN(yNum)) {
-                return sortDirections[n] ? xNum - yNum : yNum - xNum;
-            }
-            
-            return sortDirections[n] ? x.localeCompare(y) : y.localeCompare(x);
+            let x = a.cells[n].innerText.toLowerCase();
+            let y = b.cells[n].innerText.toLowerCase();
+            return sortDir[n] ? x.localeCompare(y, undefined, {numeric: true}) : y.localeCompare(x, undefined, {numeric: true});
         });
-
-        rows.forEach(row => tbody.appendChild(row));
+        rows.forEach(r => tbody.appendChild(r));
     }
 
     update();
-    setInterval(update, 60000); // Aggiorna ogni minuto
+    setInterval(update, 60000);
 </script>
 </body>
 </html>
