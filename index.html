@@ -8,6 +8,26 @@
         .data-section { max-width: 1500px; margin: 0 auto; background-color: #1e222d; border-radius: 12px; border: 1px solid #2a2e39; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
         .header-panel { padding: 20px; border-bottom: 1px solid #2a2e39; background: #1e222d; display: flex; justify-content: space-between; align-items: center; }
         h2 { margin: 0; font-size: 20px; color: #d1d4dc; letter-spacing: 1px; }
+        
+        /* Contenitore tasto e stato */
+        .controls { display: flex; align-items: center; gap: 20px; }
+        
+        /* Stile Tasto Aggiorna */
+        .refresh-btn { 
+            background-color: #2962ff; 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 12px;
+            transition: background 0.2s;
+            text-transform: uppercase;
+        }
+        .refresh-btn:hover { background-color: #1e4bd8; }
+        .refresh-btn:active { transform: translateY(1px); }
+
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
         th { position: sticky; top: 0; background: #2a2e39; color: #b2b5be; padding: 15px 12px; cursor: pointer; border-bottom: 2px solid #363a45; font-weight: 600; text-transform: uppercase; font-size: 11px; }
@@ -22,7 +42,7 @@
         .buy-pill { color: #00ff00; font-weight: bold; background: rgba(0, 255, 0, 0.1); padding: 4px 8px; border-radius: 4px; }
         .sell-pill { color: #ff4444; font-weight: bold; background: rgba(255, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; }
         .ticker-style { font-weight: bold; color: #2962ff; font-size: 15px; }
-        .market-style { color: #8d92a3; font-style: italic; font-size: 13px; } /* Stile per Markets */
+        .market-style { color: #8d92a3; font-style: italic; font-size: 13px; }
         .pos-var { color: #00ff00; font-weight: 500; }
         .neg-var { color: #ff4444; font-weight: 500; }
     </style>
@@ -32,7 +52,10 @@
     <div class="data-section">
         <div class="header-panel">
             <h2>Dashboard Moneyline</h2>
-            <div id="status" style="color: #4caf50; font-weight: bold;">● LIVE DATA ACTIVE</div>
+            <div class="controls">
+                <button class="refresh-btn" onclick="update()">🔄 Aggiorna Ora</button>
+                <div id="status" style="color: #4caf50; font-weight: bold; font-size: 12px;">● AUTO-UPDATE AT 04:00</div>
+            </div>
         </div>
         
         <div class="table-container">
@@ -40,7 +63,8 @@
                 <thead>
                     <tr>
                         <th onclick="sortTable(0)">Ticker</th>
-                        <th onclick="sortTable(1)">MARKETS</th> <th onclick="sortTable(2)">LAST PRICE</th>
+                        <th onclick="sortTable(1)">MARKETS</th> 
+                        <th onclick="sortTable(2)">LAST PRICE</th>
                         <th onclick="sortTable(3)">Trend W</th>
                         <th onclick="sortTable(4)">Price Since Flip W</th>
                         <th onclick="sortTable(5)">Var % W</th>
@@ -49,14 +73,15 @@
                         <th onclick="sortTable(8)">Var % D</th>
                     </tr>
                     <tr class="filter-row">
-                        <th><input type="text" class="filter-input" placeholder="🔍 Ticker" onkeyup="filterTable(0)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Market..." onkeyup="filterTable(1)"></th> <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(2)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(3)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(4)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(5)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(6)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(7)"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable(8)"></th>
+                        <th><input type="text" class="filter-input" placeholder="🔍 Ticker" onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Market..." onkeyup="filterTable()"></th> 
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtra..." onkeyup="filterTable()"></th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -83,6 +108,10 @@
     }
 
     async function update() {
+        const btn = document.querySelector('.refresh-btn');
+        btn.innerText = "⏳ Caricamento...";
+        btn.disabled = true;
+
         try {
             const res = await fetch(csvUrl + '&nocache=' + Date.now());
             const text = await res.text();
@@ -98,16 +127,14 @@
                 const ticker = c[0] || "";
                 if (ticker.length < 2) return;
 
-                // --- MAPPATURA DATI ---
-                // Qui leggiamo i dati dalle colonne corrette del CSV originale
-                const market    = c[1]  || "";  // Colonna B (MARKETS) - NUOVO
-                const lastPrice = c[14] || "-"; // Colonna O
-                const trendW    = c[4]  || "";  // Colonna E
-                const flipW     = c[6]  || "";  // Colonna G
-                const varW      = c[15] || "-"; // Colonna P
-                const trendD    = c[9]  || "";  // Colonna J
-                const flipD     = c[11] || "";  // Colonna L
-                const varD      = c[16] || "-"; // Colonna Q
+                const market    = c[1]  || "";  
+                const lastPrice = c[14] || "-"; 
+                const trendW    = c[4]  || "";  
+                const flipW     = c[6]  || "";  
+                const varW      = c[15] || "-"; 
+                const trendD    = c[9]  || "";  
+                const flipD     = c[11] || "";  
+                const varD      = c[16] || "-"; 
 
                 const tr = document.createElement('tr');
                 
@@ -128,10 +155,10 @@
                     return val;
                 };
 
-                // Costruzione Riga Tabella con la nuova colonna MARKETS
                 tr.innerHTML = `
                     <td class="ticker-style">${ticker}</td>
-                    <td class="market-style">${market}</td> <td style="font-weight: bold; color: #fff;">${lastPrice}</td>
+                    <td class="market-style">${market}</td> 
+                    <td style="font-weight: bold; color: #fff;">${lastPrice}</td>
                     <td>${formatSign(trendW)}</td>
                     <td>${flipW}</td>
                     <td>${formatVar(varW)}</td>
@@ -141,11 +168,19 @@
                 `;
                 tbody.appendChild(tr);
             });
-        } catch (e) { console.error("Errore Caricamento:", e); }
+
+            // Riapplica i filtri esistenti dopo l'aggiornamento dati
+            filterTable();
+
+        } catch (e) { 
+            console.error("Errore Caricamento:", e); 
+        } finally {
+            btn.innerText = "🔄 Aggiorna Ora";
+            btn.disabled = false;
+        }
     }
 
-    // Funzione Filtro Aggiornata per gestire più colonne
-    window.filterTable = function(n) {
+    window.filterTable = function() {
         let inputs = document.getElementsByClassName("filter-input");
         let table = document.getElementById("tableBody");
         let rows = table.getElementsByTagName("tr");
@@ -166,7 +201,6 @@
         }
     }
 
-    // Funzione Ordinamento Aggiornata
     let sortOrder = {};
     window.sortTable = function(n) {
         let tbody = document.getElementById("tableBody");
@@ -175,10 +209,8 @@
         rows.sort((a, b) => {
             let x = a.cells[n].innerText.toLowerCase().replace('%','').replace(',','.');
             let y = b.cells[n].innerText.toLowerCase().replace('%','').replace(',','.');
-            
             let numX = parseFloat(x);
             let numY = parseFloat(y);
-            
             if (!isNaN(numX) && !isNaN(numY)) {
                 return sortOrder[n] ? numX - numY : numY - numX;
             }
@@ -187,8 +219,22 @@
         rows.forEach(r => tbody.appendChild(r));
     }
 
+    function pianificaAggiornamentoQuattroMattina() {
+        const oraAttuale = new Date();
+        const target = new Date();
+        target.setHours(4, 0, 0, 0);
+        if (oraAttuale >= target) {
+            target.setDate(target.getDate() + 1);
+        }
+        const msMancanti = target.getTime() - oraAttuale.getTime();
+        setTimeout(function() {
+            update();
+            pianificaAggiornamentoQuattroMattina();
+        }, msMancanti);
+    }
+
     update();
-    setInterval(update, 60000);
+    pianificaAggiornamentoQuattroMattina();
 </script>
 </body>
 </html>
