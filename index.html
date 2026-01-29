@@ -6,18 +6,18 @@
     <style>
         body { margin: 0; padding: 20px; background-color: #131722; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e0e0e0; }
         .data-section { max-width: 1600px; margin: 0 auto; background-color: #1e222d; border-radius: 12px; border: 1px solid #2a2e39; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
-        .header-panel { padding: 20px; border-bottom: 1px solid #2a2e39; background: #1e222d; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .header-panel { padding: 20px; border-bottom: 1px solid #2a2e39; background: #1e222d; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; }
         h2 { margin: 0; font-size: 24px; color: #d1d4dc; letter-spacing: 1px; }
         
-        .info-container { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-        
-        /* Scritta Auto-Update Ingrandita */
+        .info-container { display: flex; flex-direction: column; align-items: flex-end; }
         #status { color: #4caf50; font-weight: bold; font-size: 18px; letter-spacing: 0.5px; }
         
-        /* Sistema di Conteggio Segnali */
-        .signal-stats { display: flex; gap: 25px; font-weight: bold; font-size: 16px; text-transform: uppercase; }
-        .buy-stat { color: #00ff00; background: rgba(0, 255, 0, 0.1); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(0, 255, 0, 0.2); }
-        .sell-stat { color: #ff4444; background: rgba(255, 68, 68, 0.1); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 68, 68, 0.2); }
+        /* Stats Container */
+        .signal-stats { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+        .stat-box { font-weight: bold; font-size: 13px; text-transform: uppercase; padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px; }
+        
+        .buy-stat { color: #00ff00; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.2); }
+        .sell-stat { color: #ff4444; background: rgba(255, 68, 68, 0.1); border-color: rgba(255, 68, 68, 0.2); }
 
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
@@ -47,11 +47,13 @@
 
     <div class="data-section">
         <div class="header-panel">
-            <div>
+            <div style="flex: 1;">
                 <h2>Dashboard</h2>
-                <div class="signal-stats" style="margin-top: 10px;">
-                    <div id="buyCounter" class="buy-stat">BUY SIGNAL 0</div>
-                    <div id="sellCounter" class="sell-stat">SELL SIGNAL 0</div>
+                <div class="signal-stats">
+                    <div id="buyCounter" class="stat-box buy-stat">BUY SIGNAL TREND W: 0</div>
+                    <div id="sellCounter" class="stat-box sell-stat">SELL SIGNAL TREND W: 0</div>
+                    <div id="greenFlip" class="stat-box buy-stat">% GREEN SINCE FLIP W: 0%</div>
+                    <div id="redFlip" class="stat-box sell-stat">% RED SINCE FLIP W: 0%</div>
                 </div>
             </div>
             
@@ -135,23 +137,37 @@
         return result;
     }
 
-    // Funzione di conteggio dinamica
     function updateCounters() {
         let buyCount = 0;
         let sellCount = 0;
+        let buyGreen = 0;
+        let sellRed = 0;
+
         const rows = document.getElementById("tableBody").getElementsByTagName("tr");
         
         for (let row of rows) {
             if (row.style.display !== "none") {
-                // Colonna 3 è Trend W (indice base 0)
                 let trendW = row.cells[3].innerText.toUpperCase();
-                if (trendW.includes("BUY")) buyCount++;
-                else if (trendW.includes("SELL")) sellCount++;
+                let varWStr = row.cells[5].innerText.replace(',', '.').replace('%', '').trim();
+                let varW = parseFloat(varWStr);
+
+                if (trendW.includes("BUY")) {
+                    buyCount++;
+                    if (!isNaN(varW) && varW > 0) buyGreen++;
+                } else if (trendW.includes("SELL")) {
+                    sellCount++;
+                    if (!isNaN(varW) && varW < 0) sellRed++;
+                }
             }
         }
         
-        document.getElementById("buyCounter").innerText = "BUY SIGNAL " + buyCount;
-        document.getElementById("sellCounter").innerText = "SELL SIGNAL " + sellCount;
+        let greenPerc = buyCount > 0 ? Math.round((buyGreen / buyCount) * 100) : 0;
+        let redPerc = sellCount > 0 ? Math.round((sellRed / sellCount) * 100) : 0;
+
+        document.getElementById("buyCounter").innerText = "BUY SIGNAL TREND W: " + buyCount;
+        document.getElementById("sellCounter").innerText = "SELL SIGNAL TREND W: " + sellCount;
+        document.getElementById("greenFlip").innerText = "% GREEN SINCE FLIP W: " + greenPerc + "%";
+        document.getElementById("redFlip").innerText = "% RED SINCE FLIP W: " + redPerc + "%";
     }
 
     async function update() {
@@ -210,7 +226,7 @@
             }
             row.style.display = show ? "" : "none";
         }
-        updateCounters(); // Aggiorna i conteggi dopo il filtraggio
+        updateCounters();
     }
 
     window.handleSort = function(n) {
