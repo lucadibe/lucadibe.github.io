@@ -141,7 +141,7 @@
         let buyCount = 0;
         let sellCount = 0;
         let buyGreen = 0;
-        let sellRed = 0;
+        let buyRed = 0;
 
         const rows = document.getElementById("tableBody").getElementsByTagName("tr");
         
@@ -151,18 +151,23 @@
                 let varWStr = row.cells[5].innerText.replace(',', '.').replace('%', '').trim();
                 let varW = parseFloat(varWStr);
 
+                // Conteggio BUY/SELL totali
                 if (trendW.includes("BUY")) {
                     buyCount++;
-                    if (!isNaN(varW) && varW > 0) buyGreen++;
+                    // Analisi specifica sui soli segnali BUY per le percentuali
+                    if (!isNaN(varW)) {
+                        if (varW > 0) buyGreen++;
+                        else if (varW < 0) buyRed++;
+                    }
                 } else if (trendW.includes("SELL")) {
                     sellCount++;
-                    if (!isNaN(varW) && varW < 0) sellRed++;
                 }
             }
         }
         
+        // Calcolo percentuali basato solo sul totale dei BUY
         let greenPerc = buyCount > 0 ? Math.round((buyGreen / buyCount) * 100) : 0;
-        let redPerc = sellCount > 0 ? Math.round((sellRed / sellCount) * 100) : 0;
+        let redPerc = buyCount > 0 ? Math.round((buyRed / buyCount) * 100) : 0;
 
         document.getElementById("buyCounter").innerText = "BUY SIGNAL TREND W: " + buyCount;
         document.getElementById("sellCounter").innerText = "SELL SIGNAL TREND W: " + sellCount;
