@@ -13,7 +13,7 @@
         .logo-area { display: flex; align-items: center; gap: 20px; }
         h2 { margin: 0; font-size: 24px; color: #d1d4dc; letter-spacing: 1px; }
         
-        .ms-auth-btn { background: #2962ff; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.3s; border: none; cursor: pointer; }
+        .ms-auth-btn { background: #2962ff; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
         .ms-auth-btn:hover { background: #1e4bd8; transform: translateY(-1px); }
 
         .info-container { display: flex; flex-direction: column; align-items: flex-end; }
@@ -52,7 +52,7 @@
             <div style="flex: 1;">
                 <div class="logo-area">
                     <h2>NILE - Follow the trend</h2>
-                    <a data-ms-content="!premium" href="#/ms/login" class="ms-auth-btn">Log In</a>
+                    <button data-ms-content="!premium" data-ms-modal="login" class="ms-auth-btn">Log In</button>
                     <a data-ms-content="premium" href="#/ms/logout" class="ms-auth-btn" style="background:#3d4151">Log Out</a>
                 </div>
                 
@@ -113,7 +113,7 @@
         <div data-ms-content="!premium" class="locked-message">
             <h3>Subscribe to NILE</h3>
             <p>Access Trend Weekly and Daily signals in real time.</p>
-            <a href="#/ms/signup" class="ms-auth-btn" style="padding: 15px 30px; font-size: 16px;">Create Free Account</a>
+            <button data-ms-modal="signup" class="ms-auth-btn" style="padding: 15px 30px; font-size: 16px;">Create Free Account</button>
             <div style="margin-top: 20px; font-size: 13px; color: #666;">
                 After registration, access will be manually enabled within 24h of payment.
             </div>
