@@ -37,24 +37,89 @@
         .filter-star-toggle { cursor: pointer; font-size: 20px; color: rgba(255,255,255,0.2); transition: all 0.2s; }
         .filter-star-toggle.enabled { color: #ffca28; text-shadow: 0 0 10px rgba(255, 202, 40, 0.5); }
 
-        /* AGGIUNTE NECESSARIE PER VISIBILITA' */
-        #login-screen, #dashboard-screen { display: none; }
-        .btn-login { background: #2962ff; color: #fff; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        /* --- NUOVA PAGINA DI LOGIN MODIFICATA --- */
+        #login-screen {
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            /* Immagine Candlestick con overlay scuro */
+            background: linear-gradient(rgba(19, 23, 34, 0.8), rgba(19, 23, 34, 0.8)), 
+                        url('https://images.unsplash.com/photo-1611974717482-5da002f06103?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .login-card {
+            background: rgba(30, 34, 45, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        #login-screen h1 { 
+            color: #2962ff; 
+            letter-spacing: 6px; 
+            font-size: 56px; 
+            margin: 0; 
+            font-weight: 800;
+        }
+        
+        #login-screen p { 
+            color: #d1d4dc; 
+            margin-bottom: 40px; 
+            font-size: 18px; 
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-login { 
+            background: #2962ff; 
+            color: #fff; 
+            padding: 16px 40px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .btn-login:hover { background: #1e4bd8; transform: translateY(-2px); }
+
+        /* --- ALTRI ELEMENTI --- */
+        #dashboard-screen { display: none; }
         .logout-btn { background: transparent; border: 1px solid #3d4151; color: #8d92a3; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 15px; }
         .logout-btn:hover { color: #fff; border-color: #fff; }
-        #premium-banner { background: #2962ff; color: white; text-align: center; padding: 10px; font-weight: bold; display: none; }
+        
+        /* BANNER TRADOTTO */
+        #premium-banner { 
+            background: #2962ff; 
+            color: white; 
+            text-align: center; 
+            padding: 12px; 
+            font-weight: bold; 
+            font-size: 13px;
+            display: none; 
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="login-screen" style="height: 100vh; display: none; flex-direction: column; justify-content: center; align-items: center; background: #131722;">
-        <h1 style="color: #2962ff; letter-spacing: 3px;">NILE</h1>
-        <p style="color: #8d92a3; margin-bottom: 30px;">Institutional Trend Follower System</p>
-        <button class="btn-login" data-ms-modal="login">Accedi / Registrati</button>
+    <div id="login-screen">
+        <div class="login-card">
+            <h1>NILE</h1>
+            <p>Follow The Trend</p>
+            <button class="btn-login" data-ms-modal="login">ACCESS DASHBOARD</button>
+        </div>
     </div>
 
     <div id="dashboard-screen">
-        <div id="premium-banner">ATTENZIONE: Piano FREE - Visualizzazione limitata a 5 righe.</div>
+        <div id="premium-banner">WARNING: FREE PLAN - Limited View. Upgrade to Premium for full access.</div>
         
         <div class="data-section">
             <div class="header-panel">
@@ -125,9 +190,8 @@
     let favorites = JSON.parse(localStorage.getItem('myWatchlist')) || [];
     let watchlistOnly = false;
     let currentSort = { column: null, ascending: true };
-    let isPremiumUser = false; // Default false
+    let isPremiumUser = false;
 
-    // TUTTE LE TUE FUNZIONI ORIGINALI (NON TOCCATE)
     function toggleWatchlistFilter() {
         watchlistOnly = !watchlistOnly;
         document.getElementById('watchlistToggle').classList.toggle('enabled', watchlistOnly);
@@ -183,7 +247,6 @@
         document.getElementById("redFlip").innerText = "% RED SINCE FLIP W: " + redPerc + "%";
     }
 
-    // MODIFICA LEGGERA SOLO QUI PER IL LIMITE RIGHE
     async function update() {
         try {
             const res = await fetch(csvUrl + '&nocache=' + Date.now());
@@ -197,8 +260,6 @@
 
             lines.forEach((line, index) => {
                 if (index === 0 || !line) return;
-                
-                // --- VINCOLO VISUALIZZAZIONE ---
                 if (!isPremiumUser && rowCount >= 5) return; 
 
                 const c = parseCSVLine(line, sep);
@@ -285,30 +346,18 @@
         setTimeout(() => { update(); scheduleAutoUpdate(); }, target - now);
     }
 
-    // --- LOGICA DI ACCESSO MEMBERSTACK ---
     window.addEventListener('load', async () => {
         const memberstack = window.$memberstackDom;
-        
-        // Aspettiamo un secondo che memberstack carichi l'utente
         setTimeout(async () => {
             const { data: member } = await memberstack.getCurrentMember();
-
             if (!member) {
-                // Se non c'è utente -> Schermata Login
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('dashboard-screen').style.display = 'none';
             } else {
-                // Se c'è utente -> Dashboard
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard-screen').style.display = 'block';
-                
-                // Controlla se ha il piano Premium
                 isPremiumUser = member.planConnections && member.planConnections.some(pc => pc.planId === "premium" || pc.planId.startsWith("pln_"));
-                
-                if (!isPremiumUser) {
-                    document.getElementById('premium-banner').style.display = 'block';
-                }
-                
+                if (!isPremiumUser) document.getElementById('premium-banner').style.display = 'block';
                 update();
                 scheduleAutoUpdate();
             }
