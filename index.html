@@ -37,65 +37,72 @@
         .filter-star-toggle { cursor: pointer; font-size: 20px; color: rgba(255,255,255,0.2); transition: all 0.2s; }
         .filter-star-toggle.enabled { color: #ffca28; text-shadow: 0 0 10px rgba(255, 202, 40, 0.5); }
 
-        /* --- NUOVA PAGINA DI LOGIN MODIFICATA --- */
+        /* --- FIX LOGIN SCREEN CON SFONDO GRAFICO --- */
         #login-screen {
-            height: 100vh;
-            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; /* Gestito da JS */
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            /* Immagine Candlestick con overlay scuro */
-            background: linear-gradient(rgba(19, 23, 34, 0.8), rgba(19, 23, 34, 0.8)), 
-                        url('https://images.unsplash.com/photo-1611974717482-5da002f06103?q=80&w=2070&auto=format&fit=crop');
+            z-index: 9999;
+            margin: 0; padding: 0;
+            /* Overlay scuro per leggibilità */
+            background: linear-gradient(rgba(13, 17, 34, 0.85), rgba(13, 17, 34, 0.95)), 
+                        url('https://images.unsplash.com/photo-1611974717482-5da002f06103?auto=format&fit=crop&q=80&w=2000');
             background-size: cover;
             background-position: center;
         }
 
         .login-card {
-            background: rgba(30, 34, 45, 0.7);
-            backdrop-filter: blur(10px);
-            padding: 50px;
-            border-radius: 16px;
+            background: rgba(30, 34, 45, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 60px;
+            border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
         }
 
         #login-screen h1 { 
             color: #2962ff; 
-            letter-spacing: 6px; 
-            font-size: 56px; 
+            letter-spacing: 8px; 
+            font-size: 72px; 
             margin: 0; 
-            font-weight: 800;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(41, 98, 255, 0.4);
         }
         
         #login-screen p { 
-            color: #d1d4dc; 
-            margin-bottom: 40px; 
-            font-size: 18px; 
-            letter-spacing: 2px;
+            color: #b2b5be; 
+            margin-bottom: 50px; 
+            font-size: 20px; 
+            letter-spacing: 4px;
             text-transform: uppercase;
+            font-weight: 300;
         }
 
         .btn-login { 
             background: #2962ff; 
             color: #fff; 
-            padding: 16px 40px; 
+            padding: 18px 50px; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 12px; 
             cursor: pointer; 
             font-weight: bold; 
-            font-size: 16px;
-            transition: 0.3s;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(41, 98, 255, 0.3);
         }
-        .btn-login:hover { background: #1e4bd8; transform: translateY(-2px); }
+        .btn-login:hover { background: #1e4bd8; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(41, 98, 255, 0.5); }
 
-        /* --- ALTRI ELEMENTI --- */
+        /* --- DASHBOARD ELEMENTS --- */
         #dashboard-screen { display: none; }
         .logout-btn { background: transparent; border: 1px solid #3d4151; color: #8d92a3; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 15px; }
         .logout-btn:hover { color: #fff; border-color: #fff; }
         
-        /* BANNER TRADOTTO */
         #premium-banner { 
             background: #2962ff; 
             color: white; 
@@ -105,6 +112,7 @@
             font-size: 13px;
             display: none; 
             letter-spacing: 0.5px;
+            margin: -20px -20px 20px -20px; /* Per coprire bene il top */
         }
     </style>
 </head>
@@ -192,6 +200,7 @@
     let currentSort = { column: null, ascending: true };
     let isPremiumUser = false;
 
+    // --- FUNZIONI TABELLA (ORIGINALI) ---
     function toggleWatchlistFilter() {
         watchlistOnly = !watchlistOnly;
         document.getElementById('watchlistToggle').classList.toggle('enabled', watchlistOnly);
@@ -257,7 +266,6 @@
             tbody.innerHTML = '';
 
             let rowCount = 0;
-
             lines.forEach((line, index) => {
                 if (index === 0 || !line) return;
                 if (!isPremiumUser && rowCount >= 5) return; 
@@ -346,6 +354,7 @@
         setTimeout(() => { update(); scheduleAutoUpdate(); }, target - now);
     }
 
+    // --- LOGICA ACCESSO (FIXED) ---
     window.addEventListener('load', async () => {
         const memberstack = window.$memberstackDom;
         setTimeout(async () => {
@@ -353,9 +362,11 @@
             if (!member) {
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('dashboard-screen').style.display = 'none';
+                document.body.style.overflow = 'hidden'; // Evita scroll su login
             } else {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard-screen').style.display = 'block';
+                document.body.style.overflow = 'auto';
                 isPremiumUser = member.planConnections && member.planConnections.some(pc => pc.planId === "premium" || pc.planId.startsWith("pln_"));
                 if (!isPremiumUser) document.getElementById('premium-banner').style.display = 'block';
                 update();
