@@ -23,6 +23,7 @@
             margin-bottom: 30px; 
             border-bottom: 1px solid #1e293b; 
             padding-bottom: 20px; 
+            position: relative;
         }
         
         .header-left { display: flex; align-items: center; gap: 20px; }
@@ -44,11 +45,11 @@
         .user-info { text-align: right; font-size: 0.9rem; color: #94a3b8; }
         .update-time { color: #22c55e; font-weight: bold; display: block; margin-bottom: 5px; }
 
-        button#logout-btn {
+        button.logout-btn {
             background: transparent; border: 1px solid #334155; color: #94a3b8; 
             padding: 5px 15px; border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
-        button#logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+        button.logout-btn:hover { border-color: #ef4444; color: #ef4444; }
 
         /* KPI STATS - RIMOSSI I CONTATORI NUMERICI */
         .stats-container { 
@@ -76,13 +77,14 @@
             border: 1px solid #334155; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
         }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; } /* Ridotto min-width dato che abbiamo meno colonne */
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         
         th, td { 
-            padding: 16px; 
+            padding: 12px 16px; 
             text-align: left; 
             border-bottom: 1px solid #334155; 
             font-size: 0.95rem; 
+            white-space: nowrap;
         }
         th { 
             background: #0f172a; 
@@ -94,6 +96,7 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            cursor: pointer;
         }
 
         /* Input filtri */
@@ -112,20 +115,20 @@
 
         /* Celle specifiche */
         .badge { padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
-        .badge-buy { background: #166534; color: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.2); }
-        .badge-sell { background: #7f1d1d; color: #f87171; box-shadow: 0 0 10px rgba(248, 113, 113, 0.2); }
+        .badge-buy { background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2); }
+        .badge-sell { background: rgba(248, 113, 113, 0.1); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.2); }
         
-        .text-green { color: #4ade80; font-weight: 600; }
-        .text-red { color: #f87171; font-weight: 600; }
-        .ticker-cell { font-weight: 700; color: #38bdf8; cursor: pointer; }
-        .ticker-cell:hover { text-decoration: underline; }
+        .pos-var { color: #4ade80; font-weight: 600; }
+        .neg-var { color: #f87171; font-weight: 600; }
+        
+        .ticker-style { font-weight: 700; color: #38bdf8; font-size: 1rem; }
 
         /* Watchlist Star */
         .star-icon { cursor: pointer; font-size: 1.2rem; color: #475569; transition: color 0.2s; }
         .star-icon.active { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
-        .star-header { color: #fbbf24; cursor: pointer; }
+        .filter-star-toggle { cursor: pointer; font-size: 1.2rem; color: #475569; }
+        .filter-star-toggle.enabled { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
 
-        /* Media Query per Mobile */
         @media (max-width: 768px) {
             .brand-title { position: static; transform: none; display: block; margin: 10px 0; text-align: center; }
             .header { flex-direction: column; align-items: stretch; gap: 10px; }
@@ -139,197 +142,232 @@
     <div class="header">
         <div class="header-left">
             <h1 class="dashboard-title">Dashboard</h1>
-            <button id="logout-btn" onclick="logout()">LOGOUT</button>
+            <button class="logout-btn" data-ms-action="logout">LOGOUT</button>
         </div>
         
         <div class="brand-title">NILE - Follow the Trend</div>
 
         <div class="user-info">
             <span class="update-time">● AUTO-UPDATE 4:00 AM Italian time</span>
-            <span id="user-email">Loading user...</span>
+            <span data-ms-member="email">Loading...</span>
         </div>
     </div>
 
     <div class="stats-container">
-        <div class="stat-box bg-green" id="pct-green">% GREEN SINCE FLIP W: 0%</div>
-        <div class="stat-box bg-red" id="pct-red">% RED SINCE FLIP W: 0%</div>
+        <div class="stat-box bg-green" id="greenFlip">% GREEN SINCE FLIP W: 0%</div>
+        <div class="stat-box bg-red" id="redFlip">% RED SINCE FLIP W: 0%</div>
     </div>
 
     <div class="table-container">
         <table id="mainTable">
             <thead>
                 <tr>
-                    <th>Ticker <input type="text" class="filter-input" placeholder="🔍 Ticker" onkeyup="filterTable(0)"></th>
-                    <th>Market <input type="text" class="filter-input" placeholder="Market..." onkeyup="filterTable(1)"></th>
-                    <th>Sector <input type="text" class="filter-input" placeholder="Sector..." onkeyup="filterTable(2)"></th>
-                    <th>Industry <input type="text" class="filter-input" placeholder="Industry..." onkeyup="filterTable(3)"></th>
-                    <th>Last Price <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable(4)"></th>
-                    <th>Trend W <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable(5)"></th>
-                    <th>Price Since Flip W <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable(6)"></th>
-                    <th>Var % W <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable(7)"></th>
-                    <th style="text-align: center; cursor: pointer;" onclick="toggleWatchlistFilter()">
-                        MY WATCHLIST <span id="star-filter-icon" class="star-header">★</span>
+                    <th onclick="handleSort(0)">Ticker <input type="text" class="filter-input" placeholder="🔍 Ticker" onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(1)">Market <input type="text" class="filter-input" placeholder="Market..." onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(2)">Sector <input type="text" class="filter-input" placeholder="Sector..." onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(3)">Industry <input type="text" class="filter-input" placeholder="Industry..." onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(4)">Last Price <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(5)">Trend W <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(6)">Price Since Flip W <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable()"></th>
+                    <th onclick="handleSort(7)">Var % W <input type="text" class="filter-input" placeholder="Filter..." onkeyup="filterTable()"></th>
+                    <th style="text-align: center;">
+                        MY WATCHLIST <span id="watchlistToggle" class="filter-star-toggle" onclick="toggleWatchlistFilter()">★</span>
                     </th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 
     <script>
-        const memberstack = window.$memberstackDom;
-        let currentUser = null;
-        let showOnlyFavorites = false; // Stato filtro preferiti
+        // --- CONFIGURAZIONE ---
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdzNpQjqwdqK5ZO16Kd8hlNNtmm31gxOy1AAb49CDXqxMwEOmUpowc9H4rHWPbb9rd874zmOtcDTUo/pub?gid=1410987574&single=true&output=csv';
+        let favorites = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+        let watchlistOnly = false;
+        let currentSort = { column: null, ascending: true };
 
-        // Dati Simulati (Ora SENZA i dati Daily nel rendering, ma mantengo struttura per pulizia)
-        // NOTA: Ho rimosso i dati Daily dall'array o semplicemente non li visualizzerò
-        const marketData = [
-            { t: "SPX", m: "indices", s: "indices", i: "USA", p: "6,935.08", tw: "BUY", pw: 273, vw: 16.39 },
-            { t: "DAX", m: "indices", s: "indices", i: "Europe", p: "24,832.85", tw: "BUY", pw: 287, vw: 7.56 },
-            { t: "UKX", m: "indices", s: "indices", i: "Europe", p: "10,341.33", tw: "BUY", pw: 273, vw: 19.08 },
-            { t: "NIKKEI", m: "indices", s: "indices", i: "Asia", p: "56,363.94", tw: "BUY", pw: 231, vw: 39.08 },
-            { t: "GOLD", m: "commodities", s: "Metals", i: "Metals", p: "$4,967.27", tw: "BUY", pw: 847, vw: 150.76 },
-            { t: "SILVER", m: "commodities", s: "Metals", i: "Metals", p: "$77.94", tw: "BUY", pw: 1169, vw: 237.13 },
-            { t: "COPPER", m: "commodities", s: "Metals", i: "Metals", p: "$60,119.00", tw: "BUY", pw: 49, vw: 2.25 },
-            { t: "PLTR", m: "stocks", s: "Technology", i: "Software", p: "$142.91", tw: "SELL", pw: 4, vw: 5.20 },
-            { t: "PG", m: "stocks", s: "Consumer", i: "Personal Prod.", p: "$157.33", tw: "BUY", pw: 4, vw: -1.16 },
-            { t: "SBUX", m: "stocks", s: "Consumer", i: "Restaurants", p: "$98.98", tw: "BUY", pw: 4, vw: -0.44 },
-            { t: "LDO", m: "stocks", s: "Industrials", i: "Defense", p: "€ 54.14", tw: "BUY", pw: 1114, vw: 467.03 },
-            { t: "MU", m: "stocks", s: "Technology", i: "Semiconductors", p: "$383.50", tw: "BUY", pw: 246, vw: 231.75 }
-        ];
+        // --- FETCH E PARSING DATI ---
+        async function update() {
+            try {
+                const res = await fetch(csvUrl + '&nocache=' + Date.now());
+                const text = await res.text();
+                const sep = text.includes(';') ? ';' : ',';
+                const lines = text.split(/\r?\n/);
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
 
-        // 1. Check Login
-        memberstack.getCurrentMember().then(({ data: member }) => {
-            if (!member) {
-                window.location.href = "index.html"; 
-            } else {
-                currentUser = member;
-                document.getElementById("user-email").textContent = "User: " + member.auth.email;
-                loadFavorites(); // Carica preferiti salvati
-                renderTable(); // Disegna tabella
-                updateKPIs(); // Calcola KPI
+                lines.forEach((line, index) => {
+                    if (index === 0 || !line) return; // Salta intestazione CSV e righe vuote
+                    
+                    const c = parseCSVLine(line, sep);
+                    const ticker = c[0] || "";
+                    if (ticker.length < 2) return; // Salta righe non valide
+
+                    // MAPPATURA COLONNE (Solo Weekly, rimosso Daily)
+                    const market = c[1]||"";
+                    const sector = c[17]||"-";
+                    const industry = c[18]||"-";
+                    const lastP = c[14]||"-";
+                    const trendW = c[4]||"";
+                    const flipW = c[6]||"";
+                    const varW = c[15]||"-";
+
+                    const isFav = favorites.includes(ticker);
+                    
+                    // FORMATTAZIONE CELLE
+                    const formatSign = v => v.toUpperCase().includes('BUY') ? `<span class="badge badge-buy">${v}</span>` : v.toUpperCase().includes('SELL') ? `<span class="badge badge-sell">${v}</span>` : v;
+                    
+                    const formatVar = v => {
+                        if (v === "-") return v;
+                        const n = parseFloat(v.replace(',','.').replace('%',''));
+                        return isNaN(n) ? v : `<span class="${n>0?'pos-var':n<0?'neg-var':''}">${v}</span>`;
+                    };
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="ticker-style">${ticker}</td>
+                        <td style="font-style:italic; color:#94a3b8;">${market}</td>
+                        <td>${sector}</td>
+                        <td>${industry}</td>
+                        <td style="font-weight:bold; color:#fff;">${lastP}</td>
+                        <td>${formatSign(trendW)}</td>
+                        <td>${flipW}</td>
+                        <td>${formatVar(varW)}</td>
+                        <td style="text-align: center;" data-val="${isFav?'YES':'NO'}">
+                            <span class="star-icon ${isFav?'active':''}" onclick="toggleFavorite('${ticker}',this)">★</span>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+
+                filterTable();
+                updateCounters();
+
+            } catch (e) { console.error("Update Error:", e); }
+        }
+
+        // --- PARSER CSV ROBUSTO ---
+        function parseCSVLine(line, sep) {
+            const result = [];
+            let cur = '', inQuotes = false;
+            for (let char of line) {
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === sep && !inQuotes) { result.push(cur.trim()); cur = ''; }
+                else cur += char;
             }
-        }).catch(() => {
-            // Per test locale se memberstack fallisce
-            renderTable();
-            updateKPIs();
-        });
-
-        // 2. Logout
-        function logout() {
-            memberstack.logout().then(() => {
-                window.location.href = "index.html";
-            });
+            result.push(cur.trim());
+            return result;
         }
 
-        // 3. Gestione Preferiti (LocalStorage)
-        function getFavorites() {
-            const saved = localStorage.getItem('nile_favorites');
-            return saved ? JSON.parse(saved) : [];
-        }
-
-        function toggleFavorite(ticker) {
-            let favs = getFavorites();
-            if (favs.includes(ticker)) {
-                favs = favs.filter(t => t !== ticker); // Rimuovi
+        // --- GESTIONE PREFERITI ---
+        function toggleFavorite(ticker, element) {
+            const index = favorites.indexOf(ticker);
+            if (index > -1) {
+                favorites.splice(index, 1);
+                element.classList.remove('active');
+                element.closest('td').setAttribute('data-val', 'NO');
             } else {
-                favs.push(ticker); // Aggiungi
+                favorites.push(ticker);
+                element.classList.add('active');
+                element.closest('td').setAttribute('data-val', 'YES');
             }
-            localStorage.setItem('nile_favorites', JSON.stringify(favs));
-            renderTable(); // Ridisegna per aggiornare stelle
-        }
-
-        function loadFavorites() {
-            // Serve solo per init
+            localStorage.setItem('myWatchlist', JSON.stringify(favorites));
+            filterTable(); // Aggiorna se siamo in vista "Solo Preferiti"
         }
 
         function toggleWatchlistFilter() {
-            showOnlyFavorites = !showOnlyFavorites;
-            const icon = document.getElementById('star-filter-icon');
-            if(showOnlyFavorites) {
-                icon.style.color = "#fbbf24";
-                icon.style.textShadow = "0 0 10px #fbbf24";
-            } else {
-                icon.style.color = "#475569";
-                icon.style.textShadow = "none";
-            }
-            renderTable();
+            watchlistOnly = !watchlistOnly;
+            document.getElementById('watchlistToggle').classList.toggle('enabled', watchlistOnly);
+            filterTable();
         }
 
-        // 4. Render Table
-        function renderTable() {
-            const tbody = document.getElementById("tableBody");
-            tbody.innerHTML = "";
-            const favs = getFavorites();
-
-            marketData.forEach(row => {
-                // Filtro Preferiti
-                if (showOnlyFavorites && !favs.includes(row.t)) return;
-
-                const tr = document.createElement("tr");
-                
-                // Classi colore
-                const trendWClass = row.tw === "BUY" ? "badge-buy" : "badge-sell";
-                const varWClass = row.vw >= 0 ? "text-green" : "text-red";
-
-                // Icona stella
-                const isFav = favs.includes(row.t);
-                const starClass = isFav ? "active" : "";
-
-                // COSTRUZIONE RIGA (Senza colonne Daily)
-                tr.innerHTML = `
-                    <td class="ticker-cell">${row.t}</td>
-                    <td style="font-style:italic; color:#94a3b8;">${row.m}</td>
-                    <td>${row.s}</td>
-                    <td>${row.i}</td>
-                    <td style="font-weight:bold;">${row.p}</td>
-                    <td><span class="badge ${trendWClass}">${row.tw}</span></td>
-                    <td>${row.pw}</td>
-                    <td class="${varWClass}">${row.vw}%</td>
-                    <td style="text-align:center;">
-                        <span class="star-icon ${starClass}" onclick="toggleFavorite('${row.t}')">★</span>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            // Riapplica i filtri input se presenti
-             // (in una versione avanzata si salverebbe lo stato dei filtri)
-        }
-
-        // 5. Update KPIs (Solo Percentuali)
-        function updateKPIs() {
-            const total = marketData.length;
-            if (total === 0) return;
-
-            const greenW = marketData.filter(d => d.vw > 0).length;
+        // --- FILTRI ---
+        function filterTable() {
+            const inputs = document.getElementsByClassName("filter-input");
+            const rows = document.getElementById("tableBody").getElementsByTagName("tr");
             
-            const pctGreen = ((greenW / total) * 100).toFixed(0);
-            const pctRed = (100 - pctGreen).toFixed(0);
-
-            document.getElementById("pct-green").textContent = `% GREEN SINCE FLIP W: ${pctGreen}%`;
-            document.getElementById("pct-red").textContent = `% RED SINCE FLIP W: ${pctRed}%`;
+            for (let row of rows) {
+                let show = true;
+                
+                // 1. Filtro Watchlist
+                if (watchlistOnly && row.cells[8].getAttribute('data-val') !== 'YES') show = false;
+                
+                // 2. Filtri Colonne
+                if (show) {
+                    for (let j = 0; j < inputs.length; j++) {
+                        let f = inputs[j].value.toUpperCase();
+                        if (f && !row.cells[j].innerText.toUpperCase().includes(f)) { show = false; break; }
+                    }
+                }
+                row.style.display = show ? "" : "none";
+            }
+            updateCounters(); // Ricalcola i KPI in base alle righe visibili
         }
 
-        // 6. Filter Function (Semplice)
-        function filterTable(colIndex) {
-            const input = document.getElementsByTagName("input")[colIndex]; // Prende l'input header corretto
-            const filter = input.value.toUpperCase();
-            const table = document.getElementById("mainTable");
-            const tr = table.getElementsByTagName("tr");
+        // --- ORDINAMENTO ---
+        function handleSort(n) {
+            if (currentSort.column === n) currentSort.ascending = !currentSort.ascending;
+            else { currentSort.column = n; currentSort.ascending = true; }
+            sortTable(n);
+        }
 
-            for (let i = 1; i < tr.length; i++) {
-                let td = tr[i].getElementsByTagName("td")[colIndex];
-                if (td) {
-                    let txtValue = td.textContent || td.innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
+        function sortTable(n) {
+            const tbody = document.getElementById("tableBody");
+            const rows = Array.from(tbody.rows);
+            rows.sort((a, b) => {
+                let valA = (n===8) ? a.cells[n].getAttribute('data-val') : a.cells[n].innerText;
+                let valB = (n===8) ? b.cells[n].getAttribute('data-val') : b.cells[n].innerText;
+                
+                let x = valA.toLowerCase().replace('%','').replace(',','.');
+                let y = valB.toLowerCase().replace('%','').replace(',','.');
+                
+                let numX = parseFloat(x), numY = parseFloat(y);
+                let res = (!isNaN(numX) && !isNaN(numY)) ? numX - numY : x.localeCompare(y);
+                
+                return currentSort.ascending ? res : -res;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+        }
+
+        // --- KPI AGGIORNATI (SOLO % GREEN/RED) ---
+        function updateCounters() {
+            let buyCount = 0; let buyGreen = 0; let buyRed = 0;
+            const rows = document.getElementById("tableBody").getElementsByTagName("tr");
+            
+            for (let row of rows) {
+                if (row.style.display !== "none") {
+                    let trendW = row.cells[5].innerText.toUpperCase();
+                    let varWStr = row.cells[7].innerText.replace(',', '.').replace('%', '').trim();
+                    let varW = parseFloat(varWStr);
+                    
+                    if (trendW.includes("BUY")) {
+                        buyCount++;
+                        if (!isNaN(varW)) { 
+                            if (varW > 0) buyGreen++; 
+                            else if (varW < 0) buyRed++; 
+                        }
                     }
                 }
             }
+            
+            let greenPerc = buyCount > 0 ? Math.round((buyGreen / buyCount) * 100) : 0;
+            let redPerc = buyCount > 0 ? Math.round((buyRed / buyCount) * 100) : 0; // O (100 - greenPerc)
+
+            document.getElementById("greenFlip").innerText = `% GREEN SINCE FLIP W: ${greenPerc}%`;
+            document.getElementById("redFlip").innerText = `% RED SINCE FLIP W: ${redPerc}%`;
         }
+
+        // --- MEMBERSTACK & INIT ---
+        window.addEventListener('load', async () => {
+            const memberstack = window.$memberstackDom;
+            const { data: member } = await memberstack.getCurrentMember();
+            if (member) {
+                // Utente loggato: avvia tutto
+                update();
+            } else {
+                // Utente non loggato: redirect alla home
+                window.location.href = "index.html";
+            }
+        });
     </script>
 </body>
 </html>
