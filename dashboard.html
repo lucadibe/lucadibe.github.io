@@ -64,10 +64,17 @@
         </div>
     </div>
 
-    <div class="stats-container">
-        <div class="stat-box bg-green" id="greenFlip">% GREEN SINCE FLIP W: 0%</div>
-        <div class="stat-box bg-red" id="redFlip">% RED SINCE FLIP W: 0%</div>
-    </div>
+<style>
+    /* Aggiungi questo pezzetto di CSS per il nuovo pulsante */
+    .bg-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; cursor: pointer; border: 1px solid #38bdf8 !important; transition: 0.3s; }
+    .bg-blue:hover { background: rgba(56, 189, 248, 0.4); transform: translateY(-2px); }
+</style>
+
+<div class="stats-container">
+    <div class="stat-box bg-green" id="greenFlip">% GREEN SINCE FLIP W: 0%</div>
+    <div class="stat-box bg-red" id="redFlip">% RED SINCE FLIP W: 0%</div>
+    <div class="stat-box bg-blue" onclick="window.location.href='industry-stats.html'">STATISTICS - INDUSTRY</div>
+</div>
 
     <div class="table-container">
         <table id="mainTable">
@@ -223,3 +230,4 @@
     </script>
 </body>
 </html>
+
