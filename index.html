@@ -21,16 +21,16 @@
             padding: 0; 
         }
 
-        /* HERO SECTION */
+        /* HERO SECTION - Ridotto lo spazio vuoto in alto */
         .hero-section {
             position: relative;
-            min-height: 100vh;
+            min-height: 70vh; /* Ridotta da 100vh per tirare su tutto */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Allinea verso l'alto invece che al centro */
             text-align: center;
-            padding: 80px 20px;
+            padding: 40px 20px 80px 20px; /* Padding superiore dimezzato */
         }
 
         /* TITOLO PRINCIPALE */
@@ -45,14 +45,14 @@
             line-height: 1.1;
         }
 
-        /* SOTTOTITOLO (Grande la metà, non tutto maiuscolo) */
+        /* SOTTOTITOLO */
         .hero-subtitle {
             font-size: 2.25rem; 
             font-weight: 800;
             color: #38bdf8;
             margin: 10px 0 40px 0;
             text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
-            text-transform: none; /* mixed case */
+            text-transform: none; 
             letter-spacing: 2px;
         }
 
@@ -60,7 +60,7 @@
         .hero-features-list {
             margin-bottom: 50px;
             text-align: center;
-            max-width: 900px;
+            max-width: 100%; /* Allargata per permettere la riga singola */
         }
 
         .hero-features-list p {
@@ -69,12 +69,13 @@
             margin: 12px 0;
             display: flex;
             align-items: center;
-            justify-content: center; /* Centratura orizzontale */
+            justify-content: center; 
             gap: 12px;
             line-height: 1.4;
+            white-space: nowrap; /* Impedisce al testo di andare a capo */
         }
 
-        /* PULSANTI (Stile pieno e grandi) */
+        /* PULSANTI */
         .button-group {
             display: flex;
             gap: 25px;
@@ -109,14 +110,14 @@
         .feature-image { flex: 2; } 
         .feature-image img { width: 100%; height: auto; border-radius: 20px; border: 3px solid #334155; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
 
-        /* CTA FINALE (Penultima posizione) */
+        /* CTA FINALE */
         .bottom-cta {
             padding: 100px 20px;
             text-align: center;
             background: rgba(15, 23, 42, 0.4);
         }
 
-        /* DISCLAIMER A FONDO PAGINA */
+        /* DISCLAIMER */
         .footer-disclaimer {
             text-align: center;
             padding: 60px 20px;
@@ -132,8 +133,9 @@
 
         @media (max-width: 1024px) {
             .feature-row, .feature-row:nth-child(even) { flex-direction: column; text-align: center; gap: 40px; }
-            .hero-title { font-size: 3rem; }
-            .hero-subtitle { font-size: 1.6rem; }
+            .hero-title { font-size: 2.8rem; }
+            .hero-subtitle { font-size: 1.4rem; }
+            .hero-features-list p { white-space: normal; font-size: 1.1rem; } /* Permette il ritorno a capo solo su mobile per non rompere il layout */
             .button-group { flex-direction: column; align-items: center; }
             .btn-nile { width: 80%; padding: 20px 0; font-size: 1.4rem; }
         }
