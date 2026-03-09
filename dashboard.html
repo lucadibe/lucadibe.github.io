@@ -157,7 +157,7 @@
         </div>
         <div class="stat-box bg-blue">
             <span>INITIAL BALANCE:</span>
-            <input type="number" id="initialBalance" class="balance-input" value="500000" readonly>
+            <input type="number" id="initialBalance" class="balance-input" value="500000" oninput="calculateBalance()">
         </div>
         <div class="stat-box bg-blue">
             <span>BALANCE BACKTEST: <span id="balanceBacktestValue">0</span></span>
@@ -458,7 +458,11 @@
 
         // Funzione per ripristinare lo stato dei filtri al caricamento
         function restoreFilterState() {
-            // 1. Ripristina Bilancio -> RIMOSSO per mantenere fisso a 500k
+            // 1. Ripristina Bilancio salvato
+            const savedBalance = localStorage.getItem('nile_initialBalance');
+            if (savedBalance) {
+                document.getElementById('initialBalance').value = savedBalance;
+            }
 
             // 2. Ripristina Watchlist Toggle
             const savedWatchlist = localStorage.getItem('nile_watchlistOnly') === 'true';
