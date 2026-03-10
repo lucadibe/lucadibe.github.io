@@ -373,12 +373,21 @@
                     const backtestNum = parseFloat(backtestStr.replace(',','.').replace('%',''));
                     totalBacktestSum += isNaN(backtestNum) ? 0 : backtestNum;
 
+                    // RECUPERO NOME COMPLETO (Colonna AB -> Indice 27)
+                    // Uso replace per evitare che eventuali apostrofi rompano l'onclick JS
+                    const fullName = (c[27] || "No description available").replace(/'/g, "\\'");
+
                     htmlBuffer += `
                         <tr>
                             <td data-label="WATCHLIST" style="text-align:center;" data-fav="${isFav?'1':'0'}">
                                 <span class="star-icon ${isFav?'active':''}" onclick="toggleFavorite('${c[0]}',this)">★</span>
                             </td>
-                            <td data-label="TICKER" style="font-weight:bold; color:#38bdf8;">${c[0]}</td>
+                            <td data-label="TICKER" style="font-weight:bold; color:#38bdf8;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    ${c[0]}
+                                    <span class="info-btn" style="cursor:help;" onclick="showExplanation(event, '${c[0]}', '${fullName}')">?</span>
+                                </div>
+                            </td>
                             <td data-label="TREND W">
                                 <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-start; flex-wrap: nowrap;">
                                     <span class="${trendW.includes('BUY')?'badge-buy':'badge-sell'}">${trendW}</span>
