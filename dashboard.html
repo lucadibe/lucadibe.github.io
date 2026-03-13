@@ -25,7 +25,39 @@
         .update-time { color: #22c55e; font-weight: bold; display: block; }
         button.logout-btn { background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 5px 15px; border-radius: 6px; cursor: pointer; }
 
-        /* MODIFICA QUI: Rimosso wrap e aggiunto overflow per sicurezza su schermi piccoli */
+        /* NUOVA SEZIONE RECENT FLIPS */
+        .recent-flips-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 10px 5px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            border: 1px dashed #334155;
+            align-items: center;
+        }
+        .recent-flips-title {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+            padding: 0 10px;
+            border-right: 1px solid #334155;
+            white-space: nowrap;
+        }
+        .flip-badge {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
         .stats-container { 
             display: flex; 
             gap: 15px; 
@@ -34,7 +66,6 @@
             align-items: stretch;
         }
         
-        /* MODIFICA QUI: Aggiunto flex: 1 per distribuire lo spazio e white-space per non rompere il testo */
         .stat-box { 
             padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; 
             border: 1px solid rgba(255,255,255,0.1); 
@@ -55,7 +86,6 @@
             padding: 4px 8px; border-radius: 4px; width: 80px; font-weight: bold; outline: none;
         }
 
-        /* PULSANTE FILTRO MOBILE */
         .mobile-filter-trigger {
             display: none;
             background: #38bdf8;
@@ -85,11 +115,9 @@
             font-size: 0.65rem; cursor: help; font-weight: bold; text-transform: uppercase;
         }
 
-        /* MODALI ORIGINALI */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #38bdf8; text-align: center; max-width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        /* NUOVO MODALE PER IMMAGINI TREND (ANTI-CACHE) */
         .modal-chart-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-chart-content { background: #1e293b; padding: 10px; border-radius: 12px; border: 1px solid #38bdf8; position: relative; max-width: 95%; max-height: 95%; text-align: center; }
         .modal-chart-content img { max-width: 100%; max-height: 85vh; border-radius: 8px; display: block; border: 1px solid #334155; }
@@ -97,7 +125,6 @@
         .chart-icon { margin-left: 8px; cursor: pointer; color: #94a3b8; transition: 0.2s; vertical-align: middle; font-size: 1.1rem; }
         .chart-icon:hover { color: #38bdf8; transform: scale(1.2); }
 
-        /* STILE FILTRI MOBILE NEL MODALE */
         .mobile-filters-list { text-align: left; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; max-height: 60vh; overflow-y: auto; padding-right: 5px; }
         .mobile-filter-item { display: flex; flex-direction: column; gap: 5px; }
         .mobile-filter-item label { font-size: 0.75rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; }
@@ -117,7 +144,6 @@
         .header-star { font-size: 1.3rem; cursor: pointer; color: #475569; }
         .header-star.active { color: #fbbf24; }
 
-        /* --- ADATTAMENTO SMARTPHONE --- */
         @media (max-width: 768px) {
             .mobile-filter-trigger { display: flex; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
@@ -126,7 +152,6 @@
             .user-info { width: 100%; text-align: center; }
             .user-info div { justify-content: center !important; }
             
-            /* Su mobile manteniamo il comportamento a colonna originale */
             .stats-container { flex-direction: column; flex-wrap: wrap; }
             .stat-box { justify-content: space-between; flex: none; white-space: normal; }
 
@@ -177,6 +202,13 @@
         <div class="stat-box bg-blue">
             <span>BALANCE BACKTEST: <span id="balanceBacktestValue">0</span></span>
             <span class="info-btn" onclick="showExplanation(event, 'BALANCE BACKTEST', 'Net profit on capital, if all trades were executed from 01/01/20 to 12/01/26.')">info</span>
+        </div>
+    </div>
+
+    <div id="recentFlips" class="recent-flips-section">
+        <div class="recent-flips-title">Trend Flips (0-7d)</div>
+        <div id="recentFlipsList" style="display: flex; gap: 8px;">
+            <span style="color:#475569; font-size:0.8rem; padding-left:10px;">Loading updates...</span>
         </div>
     </div>
 
@@ -356,7 +388,8 @@
                 const tbody = document.getElementById('tableBody');
                 
                 let htmlBuffer = '';
-                totalBacktestSum = 0; // Reset somma
+                let flipsBuffer = ''; // Buffer per i badge recenti
+                totalBacktestSum = 0; 
 
                 lines.forEach((line, index) => {
                     if (index === 0 || !line) return;
@@ -365,17 +398,26 @@
 
                     const isFav = favorites.includes(c[0]);
                     const trendW = c[4] || "";
+                    const timeSinceFlip = parseInt(c[6]); // Valore per il controllo 0-7
                     const varWStr = c[15] || "0%";
                     const varWNum = parseFloat(varWStr.replace(',','.').replace('%',''));
                     
-                    // Colonna T (Backtest) -> Indice 19
                     const backtestStr = c[19] || "0%";
                     const backtestNum = parseFloat(backtestStr.replace(',','.').replace('%',''));
                     totalBacktestSum += isNaN(backtestNum) ? 0 : backtestNum;
 
-                    // RECUPERO NOME COMPLETO (Colonna AB -> Indice 27)
-                    // Uso replace per evitare che eventuali apostrofi rompano l'onclick JS
                     const fullName = (c[27] || "No description available").replace(/'/g, "\\'");
+
+                    // LOGICA AGGIUNTA: Popolamento badge recenti (0-7 giorni)
+                    if (!isNaN(timeSinceFlip) && timeSinceFlip >= 0 && timeSinceFlip <= 7) {
+                        const flipColor = trendW.includes('BUY') ? '#4ade80' : '#f87171';
+                        flipsBuffer += `
+                            <div class="flip-badge">
+                                <span style="font-weight:bold; color:#38bdf8;">${c[0]}</span>
+                                <span style="color:${flipColor}; font-weight:bold; font-size:0.7rem;">${trendW}</span>
+                                <span style="color:#94a3b8; font-size:0.7rem;">${timeSinceFlip}d</span>
+                            </div>`;
+                    }
 
                     htmlBuffer += `
                         <tr>
@@ -406,21 +448,21 @@
 
                 tbody.innerHTML = htmlBuffer;
                 
-                // --- RIPRISTINO STATO FILTRI ---
-                restoreFilterState();
+                // Aggiornamento sezione badge recenti
+                const flipsContainer = document.getElementById('recentFlipsList');
+                flipsContainer.innerHTML = flipsBuffer || '<span style="color:#475569; font-size:0.8rem; padding-left:10px;">No recent flips found.</span>';
                 
+                restoreFilterState();
                 updateCounters();
                 calculateBalance(); 
             } catch (e) { console.error(e); }
         }
 
-        // Funzione calcolo automatico Bilancio
         function calculateBalance() {
             const initialInput = document.getElementById('initialBalance');
             const initial = parseFloat(initialInput.value);
             const display = document.getElementById('balanceBacktestValue');
             
-            // Salva il bilancio in localStorage
             localStorage.setItem('nile_initialBalance', initialInput.value);
 
             if (!isNaN(initial)) {
@@ -449,10 +491,7 @@
         function toggleWatchlistFilter(event) {
             if(event) event.stopPropagation();
             watchlistOnly = !watchlistOnly;
-            
-            // Salva stato watchlist
             localStorage.setItem('nile_watchlistOnly', watchlistOnly);
-
             document.getElementById('masterStar').classList.toggle('active', watchlistOnly);
             document.getElementById('mobileMasterStar').classList.toggle('active', watchlistOnly);
             filterTable();
@@ -461,8 +500,6 @@
         function filterTable() {
             const inputs = document.getElementsByClassName("desktop-filter");
             const rows = document.getElementById("tableBody").rows;
-            
-            // Salva i valori dei filtri in localStorage
             const filterValues = Array.from(inputs).map(i => i.value);
             localStorage.setItem('nile_desktopFilters', JSON.stringify(filterValues));
 
@@ -480,15 +517,10 @@
             updateCounters();
         }
 
-        // Funzione per ripristinare lo stato dei filtri al caricamento
         function restoreFilterState() {
-            // 1. Ripristina Bilancio salvato
             const savedBalance = localStorage.getItem('nile_initialBalance');
-            if (savedBalance) {
-                document.getElementById('initialBalance').value = savedBalance;
-            }
+            if (savedBalance) { document.getElementById('initialBalance').value = savedBalance; }
 
-            // 2. Ripristina Watchlist Toggle
             const savedWatchlist = localStorage.getItem('nile_watchlistOnly') === 'true';
             if (savedWatchlist) {
                 watchlistOnly = true;
@@ -496,7 +528,6 @@
                 document.getElementById('mobileMasterStar').classList.add('active');
             }
 
-            // 3. Ripristina Filtri Desktop e Mobile
             const savedFilters = JSON.parse(localStorage.getItem('nile_desktopFilters'));
             if (savedFilters) {
                 const desktopInputs = document.querySelectorAll('.desktop-filter');
@@ -506,8 +537,6 @@
                     if (mobileInputs[idx]) mobileInputs[idx].value = val;
                 });
             }
-
-            // Applica effettivamente i filtri ripristinati
             filterTable();
         }
 
